@@ -6,7 +6,7 @@ YouTube 本編で使用しているサンプルコードを以下の手順で復
 
 ※**hoge** や **fuga** は任意の名前です
 
-1. SAVF（CSCH@___.SAVF） を github よりダウンロード。**※ファイルの詳細を開いて右上の「・・・」箇所をクリック →[Download Ctrl Shift S]よりダウンロードする**
+1. 各回のチャンネル・ディレクトリより（例 csh-002:データベース回）CSCH@___.SAVFファイル名"\_\_\_"は回 ） を github よりダウンロード。**※ファイルの詳細を開いて右上の「・・・」箇所をクリック →[Download Ctrl Shift S]よりダウンロードする**
 2. IBM i 側の 5250 エミュレータで SAVF を作成する。`CRTSAVF hogeLIB/fugaSAVF`
 3. Widows のコマンド・プロントの FTP で IBM i へアップロードする例
 
