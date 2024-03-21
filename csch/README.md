@@ -25,6 +25,8 @@ put CSCH@___.SAVF /QSYS.LIB/hogeLIB.LIB/fugaSAVF.FILE
 
 4. IBM i 側の 5250 エミュレータで SAV よりオブジェクトを復元する
 
+以下 第２回の場合の復元例
+
 ```CLLE
 RSTOBJ OBJ(*ALL) SAVLIB(CSCH@002) DEV(*SAVF)
  SAVF(HOGELIB/FUGASAVF)
