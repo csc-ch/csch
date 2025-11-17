@@ -1,0 +1,90 @@
+     H*-------------------------------------------------------------------------
+     H*■課題
+     H*　同一アクセスパスを持つファイルを２つ利用したいとき
+     H*　１）ＲＰＧのために”２つのＤＤＳ”を定義する※不要なファイル定義
+     H*      - QDDSSRC.MSYOL01と全く同じQDDSSRC.MSYOL01X
+     H*　２）ＲＰＧのために”ＣＬでＯＶＲＤＢＦ”をする※コンパイルが煩雑
+     H*      - OVRDBF FILE(MSYOL01X) TOFILE(MSYOL01)
+     H*-------------------------------------------------------------------------
+     H            Y
+     F*******************************************************************
+     F** #05 便利な…EXTDESC                          << BAD052R>>   **
+     F**                       WRITTEN  25/08/27 BY CSC Y.USHIDA       **
+     F**                       UPDATE   XX/XX/XX BY XXX X.XXXXXXXX     **
+     F**--------------- PROGRAM DESCRIPTION ---------------------------**
+     F*******************************************************************
+     F*-----<<ファイル定義>>-----*
+     F*商品マスタ（コード順／読取用
+     FMSYOL01 IF  E           K        DISK
+     F            MSYOR                             KRENAMEMSYOR01
+     F*商品マスタ（コード順／更新用
+     FMSYOL01XUF  E           K        DISK
+     F            MSYOR                             KRENAMEMSYORX1
+     E*-----<<テーフ゛ル定義>>-----*
+     I*******************************************************************
+     I           SDS
+     I                                        1  10 S#PROC
+     I                                       11  150S#STS
+     I                                      244 253 S#JOB
+     I                                      254 263 S#USER
+     I                                      264 2690S#JNBR
+     C*******************************************************************
+     C**        KLIST                                                  **
+     C*******************************************************************
+     C           MSKEY1    KLIST
+     C                     KFLD           K@SYHN
+     C           *LIKE     DEFN MSSYHN    K@SYHN
+     C*******************************************************************
+     C**        M A I N   R O U T I N E                                **
+     C*******************************************************************
+     C*
+     C                     EXSR @INZ
+     C*
+     C                     MOVEL*HIVAL    K@SYHN           商品コード
+     C           MSKEY1    SETGTMSYORX1
+     C*
+     C           1         DO   3
+     C                     READ MSYOR01                  90
+     C   90                LEAVE
+     C*
+     C                     MOVEL'R:'      W#MSG1 48 P      メッセージ
+     C           W#MSG1    CAT  MSSYHN:0  W#MSG1           メッセージ
+     C           W#MSG1    CAT  MSSYNM:1  W#MSG1           メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C                     READPMSYORX1                  55
+     C   55                ITER
+     C*
+     C                     Z-ADDWDATE8    MSUPDT           更新日付
+     C                     Z-ADDWTIME6    MSUPTM           更新時刻
+     C                     MOVELS#PROC    MSUPPG           更新ＰＧＭ
+     C                     UPDATMSYORX1
+     C*
+     C                     MOVEL'U:'      W#MSG1    P      メッセージ
+     C           W#MSG1    CAT  MSSYHN:0  W#MSG1           メッセージ
+     C           W#MSG1    CAT  MSSYNM:1  W#MSG1           メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C                     ENDDO
+     C*
+     C                     EXSR @END
+     C*
+     C*******************************************************************
+     C**                  初期処理                                   **
+     C*******************************************************************
+     C           @INZ      BEGSR
+     C*
+     C                     TIME           WTIME  140
+     C                     MOVELWTIME     WTIME6  60
+     C                     MOVE WTIME     WDATE8  80
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  終了処理                                   **
+     C*******************************************************************
+     C           @END      BEGSR
+     C*
+     C                     SETON                     LR
+     C                     RETRN
+     C*
+     C                     ENDSR

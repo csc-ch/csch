@@ -1,0 +1,377 @@
+     H*-------------------------------------------------------------------------
+     H*■課題
+     H*　レコード単位にＤＳを定義する際の手間やミス
+     H*　ＤＳＰＦの拡張にＤＳ定義を追従させる
+     H*-------------------------------------------------------------------------
+     H            Y
+     F*******************************************************************
+     F** #05 便利な…LIKEREC                          << BAD053R>>   **
+     F**                       WRITTEN  25/08/27 BY CSC Y.USHIDA       **
+     F**                       UPDATE   XX/XX/XX BY XXX X.XXXXXXXX     **
+     F**--------------- PROGRAM DESCRIPTION ---------------------------**
+     F*******************************************************************
+     F*-----<<ファイル定義>>-----*
+     F*画面装置
+     FBAD053D CF  E                    WORKSTN
+     F*商品マスタ
+     FMSYOL01 UF  E           K        DISK
+     E*-----<<テーフ゛ル定義>>-----*
+     E                    MSG     1  10 76               メッセージ
+     E*
+     E                    HST        99256               履歴
+     I*******************************************************************
+     I           SDS
+     I                                        1  10 S#PROC
+     I                                       11  150S#STS
+     I                                      244 253 S#JOB
+     I                                      254 263 S#USER
+     I                                      264 2690S#JNBR
+     I*
+     I*■データ構造の定義
+     I*　配列化するデータ構造を手動で定義するケースが多い
+     I*　手作業でミスや空目するなどがある
+     I*　パック計算など面倒
+     I            DS
+     I                                        1 256 HSTREC
+     I                                        1   5 I1SYHN
+     I                                        6  41 D2SYNM
+     I                                    P  42  462D2SYT1
+     I                                    P  47  512D2SYT2
+     I                                       52  53 D2ZEIK
+     I                                    P  54  580D2SU11
+     I                                    P  59  630D2SU12
+     I                                       64  73 D2MODE
+     C*******************************************************************
+     C**        KLIST                                                  **
+     C*******************************************************************
+     C           MSKEY1    KLIST
+     C                     KFLD           MSSYHN
+     C*******************************************************************
+     C**        M A I N   R O U T I N E                                **
+     C*******************************************************************
+     C*
+     C                     EXSR @INZ
+     C*
+     C                     DO   *HIVAL
+     C*
+     C                     SELEC
+     C           W#CTL     WHEQ 'PNL1'
+     C                     EXSR @PNL1
+     C           W#CTL     WHEQ 'PNL2'
+     C                     EXSR @PNL2
+     C                     OTHER
+     C                     LEAVE
+     C                     ENDSL
+     C*
+     C                     ENDDO
+     C*
+     C                     EXSR @END
+     C*
+     C*******************************************************************
+     C**                  初期処理                                   **
+     C*******************************************************************
+     C           @INZ      BEGSR
+     C*
+     C                     TIME           WTIME  140
+     C                     MOVELWTIME     WTIME6  60
+     C                     MOVE WTIME     WDATE8  80
+     C*
+     C                     MOVELS#PROC    D1PGM     P      ＰＧＭ－ＩＤ
+     C*
+     C                     MOVEL'PNL1'    W#CTL  10        画面制御
+     C*
+     C                     Z-ADD*ZERO     W#HC1   30       履歴（最大
+     C                     Z-ADD*ZERO     W#HC2   30       履歴（現在
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面処理（見出し                           **
+     C*******************************************************************
+     C           @PNL1     BEGSR
+     C*
+     C                     MOVELMSG,1     D3MSG     P      メッセージ
+     C                     SETOF                     95
+     C*
+     C                     WRITEPANEL03
+     C                     EXFMTPANEL01
+     C*
+     C                     MOVEL*BLANK    D1MSG     P      メッセージ
+     C*
+     C                     SETOF                     6061
+     C*
+     C           *IN03     IFEQ *ON
+     C                     MOVEL'END'     W#CTL     P      画面制御
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C*
+     C* 前を取得
+     C           *IN33     IFEQ *ON
+     C                     EXSR @UP
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C* 次を取得
+     C           *IN34     IFEQ *ON
+     C                     EXSR @DOWN
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C* 履歴（後
+     C           *IN08     IFEQ *ON
+     C                     SUB  1         W#HC2            履歴（現在
+     C                     EXSR @HST
+     C   60                GOTO #PNL19
+     C                     GOTO #PNL17
+     C                     ENDIF
+     C* 履歴（前
+     C           *IN09     IFEQ *ON
+     C                     ADD  1         W#HC2            履歴（現在
+     C                     EXSR @HST
+     C   60                GOTO #PNL19
+     C                     GOTO #PNL17
+     C                     ENDIF
+     C*
+     C* 入力チェック
+     C                     EXSR @CHK1
+     C           *IN60     IFEQ *ON
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C*
+     C           #PNL17    TAG
+     C                     MOVEL'PNL2'    W#CTL     P      画面制御
+     C*
+     C* 画面項目セット（明細
+     C  N95                EXSR @SET2
+     C*
+     C           #PNL19    ENDSR
+     C*******************************************************************
+     C**                  前を取得                                   **
+     C*******************************************************************
+     C           @UP       BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    SETLLMSYOR
+     C                     READPMSYOR               N    90
+     C           *IN90     IFEQ *OFF
+     C                     MOVELMSSYHN    I1SYHN    P      商品コード
+     C                     ELSE
+     C                     SETON                     61
+     C                     MOVELMSG,4     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  次を取得                                   **
+     C*******************************************************************
+     C           @DOWN     BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    SETGTMSYOR
+     C                     READ MSYOR               N    90
+     C           *IN90     IFEQ *OFF
+     C                     MOVELMSSYHN    I1SYHN    P      商品コード
+     C                     ELSE
+     C                     SETON                     61
+     C                     MOVELMSG,4     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  履歴取得                                   **
+     C*******************************************************************
+     C           @HST      BEGSR
+     C*
+     C* 履歴はない
+     C           W#HC1     IFLE *ZERO
+     C                     SETON                     60
+     C                     MOVELMSG,5     D1MSG     P      メッセージ
+     C                     Z-ADD*ZERO     W#HC2            履歴（現在
+     C                     GOTO #HST9
+     C                     ENDIF
+     C*
+     C* 下限
+     C           W#HC2     IFLE *ZERO
+     C                     SETON                     61
+     C                     Z-ADDW#HC1     W#HC2            履歴（現在
+     C                     MOVELMSG,6     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C* 上限
+     C           W#HC2     IFGT W#HC1
+     C                     SETON                     61
+     C                     Z-ADD1         W#HC2            履歴（現在
+     C                     MOVELMSG,7     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     Z-ADDW#HC2     I       30       ＩＮＤＥＸ
+     C                     MOVELHST,I     HSTREC
+     C                     Z-ADDW#HC2     D2HSTI
+     C*
+     C                     SETON                     95
+     C*
+     C           #HST9     ENDSR
+     C*******************************************************************
+     C**                  チェック（見出                             **
+     C*******************************************************************
+     C           @CHK1     BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    CHAINMSYOR               N90
+     C           *IN90     IFEQ *ON
+     C                     SETON                     60
+     C                     MOVELMSG,3     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面項目セット                             **
+     C*******************************************************************
+     C           @SET2     BEGSR
+     C*
+     C                     MOVELMSSYNM    D2SYNM           商品名（正式）
+     C                     Z-ADDMSSYTN    D2SYT1           販売単価
+     C           MSSYTN    MULT 0.6       D2SYT2           仕入単価
+     C*
+     C                     MOVELMSZEIK    D2ZEIK           税区分
+     C*
+     C                     Z-ADD12345     D2SU11           当月売上数量
+     C           D2SU11    MULT 12        D2SU12           当年売上数量
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面処理（明細                             **
+     C*******************************************************************
+     C           @PNL2     BEGSR
+     C*
+     C                     MOVELMSG,2     D3MSG     P      メッセージ
+     C   95                MOVELMSG,8     D3MSG     P      メッセージ
+     C*
+     C                     WRITEPANEL03
+     C                     WRITEPANEL01
+     C                     EXFMTPANEL02
+     C*
+     C                     MOVEL*BLANK    D1MSG     P      メッセージ
+     C                     SETOF                     6061
+     C*
+     C           *IN03     IFEQ *ON
+     C                     MOVEL'END'     W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C           *IN12     IFEQ *ON
+     C                     MOVEL'PNL1'    W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C* 前を取得
+     C  N95      *IN33     IFEQ *ON
+     C                     EXSR @UP
+     C                     EXSR @SET2
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 次を取得
+     C  N95      *IN34     IFEQ *ON
+     C                     EXSR @DOWN
+     C                     EXSR @SET2
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 履歴（後
+     C           *IN08     IFEQ *ON
+     C                     SUB  1         W#HC2            履歴（現在
+     C                     EXSR @HST
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 履歴（前
+     C           *IN09     IFEQ *ON
+     C                     ADD  1         W#HC2            履歴（現在
+     C                     EXSR @HST
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 削除
+     C           *IN23     IFEQ *ON
+     C                     EXSR @DEL
+     C                     MOVEL'PNL1'    W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 入力チェック
+     C                     EXSR @CHK2
+     C           *IN60     IFEQ *ON
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 修正
+     C           *IN10     IFEQ *ON
+     C                     EXSR @UPD
+     C                     MOVEL'PNL1'    W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C           #PNL29    ENDSR
+     C*******************************************************************
+     C**                  チェック（明細                             **
+     C*******************************************************************
+     C           @CHK2     BEGSR
+     C*
+     C           D2SYT1    MULT 0.6       D2SYT2           仕入単価
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  更新処理                                   **
+     C*******************************************************************
+     C           @UPD      BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    CHAINMSYOR                90
+     C   90                GOTO #UPD9
+     C*
+     C                     MOVELD2SYNM    MSSYNM    P      商品名（正式）
+     C                     Z-ADDD2SYT1    MSSYTN           販売単価
+     C*
+     C                     MOVELD2ZEIK    MSZEIK    P      税区分
+     C*
+     C                     UPDATMSYOR
+     C*
+     C           W#HC1     IFLT 99
+     C                     MOVEL'更新'  D2MODE           処理モード
+     C                     ADD  1         W#HC1            履歴（最大
+     C                     Z-ADDW#HC1     I                ＩＮＤＥＸ
+     C                     MOVELHSTREC    HST,I
+     C                     ENDIF
+     C*
+     C           #UPD9     ENDSR
+     C*******************************************************************
+     C**                  削除処理                                   **
+     C*******************************************************************
+     C           @DEL      BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    CHAINMSYOR                90
+     C   90                GOTO #DEL9
+     C*
+     C                     DELETMSYOR
+     C*
+     C           W#HC1     IFLT 99
+     C                     MOVEL'削除'  D2MODE           処理モード
+     C                     ADD  1         W#HC1            履歴（最大
+     C                     Z-ADDW#HC1     I                ＩＮＤＥＸ
+     C                     MOVELHSTREC    HST,I
+     C                     ENDIF
+     C*
+     C           #DEL9     ENDSR
+     C*******************************************************************
+     C**                  終了処理                                   **
+     C*******************************************************************
+     C           @END      BEGSR
+     C*
+     C                     SETON                     LR
+     C                     RETRN
+     C*
+     C                     ENDSR
+**  ﾃｰﾌﾞﾙ/ﾊｲﾚﾂ  -------  MSG
+F3=終了,PAGEUP:前/PAGEDOWN:次,F8=履歴↓,F9=履歴↑
+F3=終了,F12=戻る,PAGEUP:前/PAGEDOWN:次,F10=登録,F23=削除
+該当の商品が存在しません。
+これ以上ありません。
+登録履歴はありません
+履歴の最後へ戻った
+履歴の先頭へ戻った
+F3=終了,F12=戻る,F8=履歴↓,F9=履歴↑
+09
+10

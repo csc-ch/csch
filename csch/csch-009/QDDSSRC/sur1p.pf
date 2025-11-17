@@ -1,0 +1,13 @@
+     A          R SUR1R                     TEXT('売上データ')
+     A*
+     A            S1URIN        11S 0       COLHDG('売上№')
+     A            S1DT01         8S 0       COLHDG('売上日付')
+     A            S1SYHN         5A         COLHDG('商品コード')
+     A*
+     A            S1SU01         7S 0       COLHDG('売上数量')
+     A            S1KN01         9S 0       COLHDG('売上金額')
+     A*
+     A            S1UPDT         8S 0       COLHDG('更新日付')
+     A            S1UPTM         6S 0       COLHDG('更新時刻')
+     A            S1UPPG        10A         COLHDG('更新ＰＧＭ')
+     A*

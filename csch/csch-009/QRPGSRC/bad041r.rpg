@@ -1,0 +1,248 @@
+     H*-------------------------------------------------------------------------
+     H*■課題
+     H*　標識に不慣れな技術者への影響やコードの可読性低下
+     H*-------------------------------------------------------------------------
+     H            Y
+     F*******************************************************************
+     F** #04 標識の呪縛                               << BAD041R>>   **
+     F**                       WRITTEN  25/08/12 BY CSC Y.USHIDA       **
+     F**                       UPDATE   XX/XX/XX BY XXX X.XXXXXXXX     **
+     F**--------------- PROGRAM DESCRIPTION ---------------------------**
+     F*******************************************************************
+     F*-----<<ファイル定義>>-----*
+     F*画面装置
+     FBAD041D CF  E                    WORKSTN
+     F*商品マスタ
+     FMSYOL01 IF  E           K        DISK
+     E*-----<<テーフ゛ル定義>>-----*
+     E                    ZEI     1   4 26               税区分
+     E                    MSG     1  10 76               メッセージ
+     I*******************************************************************
+     I           SDS
+     I                                        1  10 S#PROC
+     I                                       11  150S#STS
+     I                                      244 253 S#JOB
+     I                                      254 263 S#USER
+     I                                      264 2690S#JNBR
+     C*******************************************************************
+     C**        KLIST                                                  **
+     C*******************************************************************
+     C           MSKEY1    KLIST
+     C                     KFLD           MSSYHN
+     C*******************************************************************
+     C**        M A I N   R O U T I N E                                **
+     C*******************************************************************
+     C*
+     C                     EXSR @INZ
+     C*
+     C                     DO   *HIVAL
+     C*
+     C                     SELEC
+     C           W#CTL     WHEQ 'PNL1'
+     C                     EXSR @PNL1
+     C           W#CTL     WHEQ 'PNL2'
+     C                     EXSR @PNL2
+     C                     OTHER
+     C                     LEAVE
+     C                     ENDSL
+     C*
+     C                     ENDDO
+     C*
+     C                     EXSR @END
+     C*
+     C*******************************************************************
+     C**                  初期処理                                   **
+     C*******************************************************************
+     C           @INZ      BEGSR
+     C*
+     C                     TIME           WTIME  140
+     C                     MOVELWTIME     WTIME6  60
+     C                     MOVE WTIME     WDATE8  80
+     C*
+     C                     MOVELS#PROC    D1PGM     P      ＰＧＭ－ＩＤ
+     C*
+     C                     MOVEL'PNL1'    W#CTL  10        画面制御
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面処理（見出し                           **
+     C*******************************************************************
+     C           @PNL1     BEGSR
+     C*
+     C                     MOVELMSG,1     D3MSG     P      メッセージ
+     C*
+     C                     WRITEPANEL03
+     C                     EXFMTPANEL01
+     C*
+     C                     MOVEL*BLANK    D1MSG     P      メッセージ
+     C*
+     C*＊ＩＮ６０と６１の意味が直感的には分かりづらい
+     C                     SETOF                     6061
+     C*
+     C           *IN03     IFEQ *ON
+     C                     MOVEL'END'     W#CTL     P      画面制御
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C*
+     C*＊ＩＮ３３と３４もＰＡＧＥＵＰ／ＤＯＷＮどちらがわか分かりづらい
+     C* 前を取得
+     C           *IN33     IFEQ *ON
+     C                     EXSR @UP
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C* 次を取得
+     C           *IN34     IFEQ *ON
+     C                     EXSR @DOWN
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C*
+     C*＊ＩＮ６０が商品なしエラーと分かりづらい
+     C* 入力チェック
+     C                     EXSR @CHK1
+     C           *IN60     IFEQ *ON
+     C                     GOTO #PNL19
+     C                     ENDIF
+     C*
+     C                     MOVEL'PNL2'    W#CTL     P      画面制御
+     C*
+     C* 画面項目セット（明細
+     C                     EXSR @SET2
+     C*
+     C           #PNL19    ENDSR
+     C*******************************************************************
+     C**                  前を取得                                   **
+     C*******************************************************************
+     C           @UP       BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    SETLLMSYOR
+     C                     READPMSYOR                    90
+     C*＊ＩＮ９０＝＊ＯＦＦが”読めた”と分かりづらい
+     C           *IN90     IFEQ *OFF
+     C                     MOVELMSSYHN    I1SYHN    P      商品コード
+     C                     ELSE
+     C                     SETON                     61
+     C                     MOVELMSG,4     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  次を取得                                   **
+     C*******************************************************************
+     C           @DOWN     BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    SETGTMSYOR
+     C                     READ MSYOR                    90
+     C*＊ＩＮ９０＝＊ＯＦＦが”読めた”と分かりづらい
+     C           *IN90     IFEQ *OFF
+     C                     MOVELMSSYHN    I1SYHN    P      商品コード
+     C                     ELSE
+     C                     SETON                     61
+     C                     MOVELMSG,4     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  チェック（見出                             **
+     C*******************************************************************
+     C           @CHK1     BEGSR
+     C*
+     C                     MOVELI1SYHN    MSSYHN    P      商品コード
+     C           MSKEY1    CHAINMSYOR                90
+     C*＊ＩＮ９０＝＊ＯＦＦが”読めた”と分かりづらい
+     C           *IN90     IFEQ *ON
+     C                     SETON                     60
+     C                     MOVELMSG,3     D1MSG     P      メッセージ
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面項目セット                             **
+     C*******************************************************************
+     C           @SET2     BEGSR
+     C*
+     C                     MOVELMSSYNM    D2SYNM           商品名（正式）
+     C                     Z-ADDMSSYTN    D2SYT1           販売単価
+     C           MSSYTN    MULT 0.6       D2SYT2           仕入単価
+     C*
+     C           MSZEIK    CAT  ':':1     D2ZEIK           税区分
+     C*
+     C                     SELEC
+     C           MSZEIK    WHEQ '01'
+     C           D2ZEIK    CAT  ZEI,1:0   D2ZEIK           税区分
+     C           MSZEIK    WHEQ '02'
+     C           D2ZEIK    CAT  ZEI,2:0   D2ZEIK           税区分
+     C           MSZEIK    WHEQ '11'
+     C           D2ZEIK    CAT  ZEI,3:0   D2ZEIK           税区分
+     C           MSZEIK    WHEQ '12'
+     C           D2ZEIK    CAT  ZEI,4:0   D2ZEIK           税区分
+     C                     ENDSL
+     C*
+     C                     Z-ADD12345     D2SU11           当月売上数量
+     C           D2SU11    MULT 12        D2SU12           当年売上数量
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  画面処理（明細                             **
+     C*******************************************************************
+     C           @PNL2     BEGSR
+     C*
+     C                     MOVELMSG,2     D3MSG     P      メッセージ
+     C*
+     C                     WRITEPANEL03
+     C                     WRITEPANEL01
+     C                     EXFMTPANEL02
+     C*
+     C                     MOVEL*BLANK    D1MSG     P      メッセージ
+     C                     SETOF                     6061
+     C*
+     C           *IN03     IFEQ *ON
+     C                     MOVEL'END'     W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C           *IN12     IFEQ *ON
+     C                     MOVEL'PNL1'    W#CTL     P      画面制御
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C* 前を取得
+     C           *IN33     IFEQ *ON
+     C                     EXSR @UP
+     C                     EXSR @SET2
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C* 次を取得
+     C           *IN34     IFEQ *ON
+     C                     EXSR @DOWN
+     C                     EXSR @SET2
+     C                     GOTO #PNL29
+     C                     ENDIF
+     C*
+     C           #PNL29    ENDSR
+     C*******************************************************************
+     C**                  終了処理                                   **
+     C*******************************************************************
+     C           @END      BEGSR
+     C*
+     C                     SETON                     LR
+     C                     RETRN
+     C*
+     C                     ENDSR
+**  ﾃｰﾌﾞﾙ/ﾊｲﾚﾂ  -------  ZEI
+不課税
+非課税
+消費税一般
+消費税軽減
+**  ﾃｰﾌﾞﾙ/ﾊｲﾚﾂ  -------  MSG
+F3=終了,PAGEUP:前/PAGEDOWN:次
+F3=終了,F12=戻る,PAGEUP:前/PAGEDOWN:次
+該当の商品が存在しません。
+これ以上ありません。
+05
+06
+07
+08
+09
+10

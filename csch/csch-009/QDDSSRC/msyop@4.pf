@@ -1,0 +1,25 @@
+     A          R MSYOR                     TEXT('商品マスター')
+     A*
+     A            MSYOSYCODE     5A         COLHDG('商品コード')
+     A                                      ALIAS(MSYOP_SYOHIN_CODE)
+     A            MSYOSYNAME    36O         COLHDG('商品正式名称')
+     A                                      ALIAS(MSYOP_SYOHIN_NAME)
+     A            MSYOSYKANA    36A         COLHDG('商品カナ名称')
+     A                                      ALIAS(MSYOP_SYOHIN_KANA)
+     A            MSYOSYTANK     9S 2       COLHDG('商品単価')
+     A                                      ALIAS(MSYOP_SYOHIN_TANKA)
+     A            MSYOZEIKBN     2A         COLHDG('税区分')
+     A                                      ALIAS(MSYOP_SYOHIN_ZEI_KUBUN)
+     A*-                                    01:不課税
+     A*-                                    02:非課税
+     A*-                                    11:消費税一般
+     A*-                                    12:消費税軽減
+     A            MSYOUPDDAT     8S 0       COLHDG('更新日付')
+     A                                      ALIAS(MSYOP_SYOHIN_UPDATE_DATE)
+     A            MSYOUPDTIM     6S 0       COLHDG('更新時刻')
+     A                                      ALIAS(MSYOP_SYOHIN_UPDATE_TIME)
+     A            MSYOUPDPGM    10A         COLHDG('更新ＰＧＭ')
+     A                                      ALIAS(MSYOP_SYOHIN_UPDATE_PGM)
+     A            MSYOTIMSTP      Z         COLHDG('タイムスタンプ')
+     A                                      ALIAS(MSYOP_SYOHIN_TIMESTAMP)
+     A*

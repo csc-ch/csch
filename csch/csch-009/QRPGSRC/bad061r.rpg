@@ -1,0 +1,247 @@
+     H*-------------------------------------------------------------------------
+     H*-------------------------------------------------------------------------
+     H            Y
+     F*******************************************************************
+     F** #06 便利な命令                               << BAD061R>>   **
+     F**                       WRITTEN  25/09/02 BY CSC Y.USHIDA       **
+     F**                       UPDATE   XX/XX/XX BY XXX X.XXXXXXXX     **
+     F**--------------- PROGRAM DESCRIPTION ---------------------------**
+     F*******************************************************************
+     F*-----<<ファイル定義>>-----*
+     F*商品マスタ
+     FMSYOL01 IF  E           K        DISK
+     E*-----<<テーフ゛ル定義>>-----*
+     E                    STR     1   1 48               文字列
+     E                    ARY        32  1               配列
+     I*******************************************************************
+     I           SDS
+     I                                        1  10 S#PROC
+     I                                       11  150S#STS
+     I                                      244 253 S#JOB
+     I                                      254 263 S#USER
+     I                                      264 2690S#JNBR
+     C*******************************************************************
+     C**        PLIST                                                  **
+     C*******************************************************************
+     C*******************************************************************
+     C**        KLIST                                                  **
+     C*******************************************************************
+     C           MSKEY1    KLIST
+     C                     KFLD           MSSYHN
+     C*******************************************************************
+     C**        M A I N   R O U T I N E                                **
+     C*******************************************************************
+     C*
+     C                     EXSR @INZ
+     C*
+     C                     EXSR @EVAL
+     C*
+     C                     EXSR @EVLC
+     C*
+     C                     EXSR @LVSR
+     C*
+     C                     EXSR @ELIF
+     C*
+     C                     EXSR @SELC
+     C*
+     C                     EXSR @FORE
+     C*
+     C                     EXSR @NOT
+     C*
+     C                     EXSR @END
+     C*
+     C*******************************************************************
+     C**                  初期処理                                   **
+     C*******************************************************************
+     C           @INZ      BEGSR
+     C*
+     C                     TIME           WTIME  140
+     C                     MOVELWTIME     WTIME6  60
+     C                     MOVE WTIME     WDATE8  80
+     C*
+     C                     MOVEL*BLANK    W#MSG1 48        メッセージ
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＥＶＡＬ                                   **
+     C*******************************************************************
+     C           @EVAL     BEGSR
+     C*
+     C                     MOVELSTR,1     W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C           '長くな'CAT  '～い':0W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＥＶＡＬ－ＣＯＲＲ                         **
+     C*******************************************************************
+     C           @EVLC     BEGSR
+     C*
+     C*///////////////////////////////////////////////////////////////
+     C*   ＲＰＧⅢではサブフィールドの概念がないため代わるものがない
+     C*     サブフィールド…親変数．子変数
+     C*///////////////////////////////////////////////////////////////
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＬＥＡＶＥＳＲ                             **
+     C*******************************************************************
+     C           @LVSR     BEGSR
+     C*
+     C*■ある画面の遷移ロジック
+     C*  Ｆ３＝終了／Ｆ４＝検索／Ｆ１０＝確定
+     C*
+     C                     SETOF                     30
+     C                     SETOF                     404142
+     C                     MOVEL*OFF      *INKC
+     C                     MOVEL*OFF      *INKD
+     C                     MOVEL*OFF      *INKJ
+     C*
+     C                     MOVEL'ZZ'      W#TKBN  2        単価区分
+     C*
+     C                     SELEC                           SELEC
+     C           *INKC     WHEQ '1'                        |<終了>
+     C           *IN40     IFEQ *OFF                       |IF
+     C           MSKEY1    CHAINMSYOR                90    ||
+     C           *IN90     IFEQ '0'                        ||IF 読めた
+     C           W#TKBN    IFEQ 'BB'                       |||IF 単価区分
+     C           W#TKBN    OREQ 'BC'                       |||OR
+     C           W#TKBN    OREQ 'BD'                       |||OR
+     C           W#TKBN    OREQ 'CB'                       |||OR
+     C           W#TKBN    OREQ 'CC'                       |||OR
+     C           W#TKBN    OREQ 'CD'                       |||OR
+     C*                    UPDATMSYOR                      |||| 更新
+     C                     ELSE                            |||ELSE
+     C*                    EXSR @UPD1                      |||| 更新処理１
+     C*                    EXSR @UPD2                      |||| 更新処理２
+     C                     END                             |||END
+     C                     END                             ||END
+     C                     END                             |END
+     C           *INKD     WHEQ '1'                        |<検索>
+     C*                    EXSR @SLT1                      | 検索
+     C                     OTHER                           |
+     C           *INKJ     IFEQ '1'                        |IF<確定>
+     C*                    EXSR @CHK1                      ||第１画面チェック
+     C           *IN30     IFEQ '0'                        ||IF
+     C                     SETOF                     43    |||
+     C*                    EXSR @UPD2                      |||
+     C*                    EXSR @DSP2                      |||第２画面セット
+     C                     END                             ||END
+     C                     END                             |END
+     C                     ENDSL                           END
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＥＬＳＥＩＦ                               **
+     C*******************************************************************
+     C           @ELIF     BEGSR
+     C*
+     C                     MOVEL'CB'      W#TKBN  2        単価区分
+     C                     Z-ADD*ZERO     W#NEBK  30       値引率％
+     C*
+     C           W#TKBN    IFEQ 'AA'
+     C                     Z-ADD10        W#NEBK           値引率％
+     C                     ENDIF
+     C           W#TKBN    IFEQ 'BB'
+     C           W#TKBN    OREQ 'BC'
+     C           W#TKBN    OREQ 'BD'
+     C           W#TKBN    OREQ 'CB'
+     C           W#TKBN    OREQ 'CC'
+     C           W#TKBN    OREQ 'CD'
+     C                     Z-ADD20        W#NEBK           値引率％
+     C                     ENDIF
+     C           W#TKBN    IFEQ 'DB'
+     C                     Z-ADD30        W#NEBK           値引率％
+     C                     ENDIF
+     C*
+     C                     MOVELW#NEBK    W#MSG1    P      メッセージ
+     C           W#MSG1    CAT  '％':0  W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＳＥＬＥＣＴ                               **
+     C*******************************************************************
+     C           @SELC     BEGSR
+     C*
+     C                     MOVEL'DB'      W#TKBN  2        単価区分
+     C                     Z-ADD*ZERO     W#NEBK  30       値引率％
+     C*
+     C                     SELEC
+     C           W#TKBN    WHEQ 'AA'
+     C                     Z-ADD10        W#NEBK           値引率％
+     C           W#TKBN    WHEQ 'BB'
+     C           W#TKBN    OREQ 'BC'
+     C           W#TKBN    OREQ 'BD'
+     C           W#TKBN    OREQ 'CB'
+     C           W#TKBN    OREQ 'CC'
+     C           W#TKBN    OREQ 'CD'
+     C                     Z-ADD20        W#NEBK           値引率％
+     C           W#TKBN    WHEQ 'DB'
+     C                     Z-ADD30        W#NEBK           値引率％
+     C                     ENDSL
+     C*
+     C                     MOVELW#NEBK    W#MSG1    P      メッセージ
+     C           W#MSG1    CAT  '％':0  W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＦＯＲ～ＥＡＣＨ                           **
+     C*******************************************************************
+     C           @FORE     BEGSR
+     C*
+     C                     MOVEA*ALL'X'   ARY,1
+     C*
+     C* 配列内の全ての値を処理
+     C           1         DO   32        IX      30
+     C*
+     C           IX        IFEQ 32
+     C                     MOVEL'配列'  W#MSG1    P      メッセージ
+     C                     CAT  '(32)':0  W#MSG1    P      メッセージ
+     C                     CAT  ARY,IX:0  W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C                     ENDIF
+     C*
+     C                     ENDDO
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  ＮＯＴ                                     **
+     C*******************************************************************
+     C           @NOT      BEGSR
+     C*
+     C           MSKEY1    CHAINMSYOR                90
+     C           *IN90     IFEQ *ON
+     C                     MOVEL'参照'  W#MSG1    P      メッセージ
+     C                     CAT  '不可':0W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C                     ENDIF
+     C*
+     C                     MOVEL'XX'      W#TKBN           単価区分
+     C           W#TKBN    IFNE 'AA'
+     C           W#TKBN    ANDNE'BB'
+     C           W#TKBN    ANDNE'BC'
+     C           W#TKBN    ANDNE'BD'
+     C           W#TKBN    ANDNE'CB'
+     C           W#TKBN    ANDNE'CC'
+     C           W#TKBN    ANDNE'CD'
+     C                     MOVEL'含ま'  W#MSG1    P      メッセージ
+     C                     CAT  'ない':0W#MSG1    P      メッセージ
+     C           W#MSG1    DSPLY
+     C                     ENDIF
+     C*
+     C                     ENDSR
+     C*******************************************************************
+     C**                  終了処理                                   **
+     C*******************************************************************
+     C           @END      BEGSR
+     C*
+     C                     SETON                     LR
+     C                     RETRN
+     C*
+     C                     ENDSR
+**  ﾃｰﾌﾞﾙ/ﾊｲﾚﾂ  -------  STR
+長～～～～～～～い文字列

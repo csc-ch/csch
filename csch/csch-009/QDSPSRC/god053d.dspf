@@ -1,0 +1,93 @@
+     A*****************************************************************
+     A**         品目マスター保守画面                              **
+     A*****************************************************************
+     A                                      PRINT
+     A                                      CF03(03 '終了')
+     A                                      INDARA
+     A*****************************************************************
+     A**          DISPLAY RECORD(NAME---PANEL01)                     **
+     A*****************************************************************
+     A          R PANEL01                   OVERLAY
+     A                                      PAGEUP(33)
+     A                                      PAGEDOWN(34)
+     A                                      CF08(08 '履歴後')
+     A                                      CF09(09 '履歴前')
+     A            D1PGM         10A  O  1  3TEXT('PGM-ID')
+     A                                  1 26'商品マスター保守'
+     A                                      DSPATR(RI HI)
+     A                                  1 63'日付'
+     A                                  1 70DATE
+     A                                      EDTCDE(Y)
+     A                                  2 63'時刻'
+     A                                  2 70TIME
+     A                                  5  4'商品コード・・・・・'
+     A            I1SYCODE       5A  B  5 27
+     A                                      ALIAS(I1_SYOHIN_CODE   )
+     A N95                                  DSPATR(UL)
+     A  95                                  DSPATR(PR)
+     A            D1MSG         36O  O  5 40TEXT('メッセージ')
+     A  60
+     AO 61                                  DSPATR(RI)
+     A  60                                  COLOR(WHT)
+     A  61                                  COLOR(YLW)
+     A*****************************************************************
+     A**          DISPLAY RECORD(NAME---PANEL02)                     **
+     A*****************************************************************
+     A          R PANEL02                   OVERLAY PROTECT
+     A                                      CF12(12 '戻る')
+     A                                      PAGEUP(33)
+     A                                      PAGEDOWN(34)
+     A N95                                  CF10(10 '登録')
+     A N95                                  CF23(23 '削除')
+     A  95                                  CF08(08 '履歴後')
+     A  95                                  CF09(09 '履歴前')
+     A*
+     A  95        D2HSTI         3Y 0O  8  6EDTCDE(4) COLOR(PNK)
+     A                                      ALIAS(D2_HISTORY_IX    )
+     A  95        D2MODE        10O  O  8 10
+     A                                      ALIAS(D2_MODE          )
+     A*
+     A                                 10  6'商品名（正式）・・'
+     A            D2SYNAME      36O  B 10 27TEXT('商品名（正式）')
+     A                                      ALIAS(D2_SYOHIN_NAME   )
+     A N95                                  DSPATR(UL)
+     A  95                                  DSPATR(PR)
+     A  41                                  DSPATR(RI PC)
+     A*
+     A                                 12  6'販売単価・・・・・'
+     A            D2SYTANK1      9Y 2B 12 27TEXT('商品単価')
+     A                                      ALIAS(D2_SYOHIN_TANKA1 )
+     A                                      EDTCDE(O)
+     A N95                                  DSPATR(UL)
+     A  95                                  DSPATR(PR)
+     A  42                                  DSPATR(RI PC)
+     A*
+     A                                 14  6'仕入単価・・・・・'
+     A            D2SYTANK2      9Y 2O 14 27TEXT('仕入単価')
+     A                                      ALIAS(D2_SYOHIN_TANKA2 )
+     A                                      EDTCDE(N)
+     A*
+     A                                 16  6'税区分・・・・・・'
+     A            D2ZEIKBN       2A  B 16 27TEXT('税区分')
+     A                                      ALIAS(D2_SYOHIN_ZEI_KUBUN )
+     A N95                                  DSPATR(UL)
+     A  95                                  DSPATR(PR)
+     A  43                                  DSPATR(RI PC)
+     A                                 16 31'(01:不課,02:非課,11:消費+
+     A                                      税,12:軽減)'
+     A                                      COLOR(BLU)
+     A*
+     A                                 18  6'当月売上数量・・・'
+     A            D2SU11         9Y 0O 18 28TEXT('当月売上数量')
+     A                                      ALIAS(D2_URI_SURYO1    )
+     A                                      EDTCDE(N)
+     A*
+     A                                 20  6'当年売上数量・・・'
+     A            D2SU12         9Y 0O 20 28TEXT('当年売上数量')
+     A                                      ALIAS(D2_URI_SURYO2    )
+     A                                      EDTCDE(N)
+     A*****************************************************************
+     A**          DISPLAY RECORD(NAME---PANEL03)                     **
+     A*****************************************************************
+     A          R PANEL03
+     A            D3MSG         76O  O 23  3TEXT('メッセージ')
